@@ -14,7 +14,7 @@ def timestamp_to_datetime(timestamp, tz=None):
     return local_dt_time
 
 
-def strtime_to_datetime(timestr):
+def strtime_to_datetime(timestr, tz=None):
     """将字符串格式的时间 (含毫秒) 转为 datetiem 格式
     :param timestr: {str}'2016-02-25 20:21:04.242'
     :return: {datetime}2016-02-25 20:21:04.242000
@@ -24,7 +24,9 @@ def strtime_to_datetime(timestr):
         format = '%Y-%m-%d %H:%M:%S.%f'
 
     local_datetime = datetime.strptime(timestr, format)
-    return local_datetime
+    # 转换成对应时区的Datetime
+    dt = tz.localize(local_datetime)
+    return dt
 
 
 def datetime_to_timestamp(datetime_obj):
@@ -32,16 +34,17 @@ def datetime_to_timestamp(datetime_obj):
     :param datetime_obj: {datetime}2016-02-25 20:21:04.242000
     :return: 13 位的毫秒时间戳 1456402864242
     """
-    local_timestamp = time.mktime(datetime_obj.timetuple()) * 1000.0 + datetime_obj.microsecond / 1000.0
+    
+    local_timestamp = datetime_obj.timestamp() * 1000.0 + datetime_obj.microsecond / 1000.0
     return int(local_timestamp)
 
 
-def strtime_to_timestamp(local_timestr):
+def strtime_to_timestamp(local_timestr, tz=None):
     """将本地时间 (字符串格式，含毫秒) 转为 13 位整数的毫秒时间戳
     :param local_timestr: {str}'2016-02-25 20:21:04.242'
     :return: 1456402864242
     """
-    local_datetime = strtime_to_datetime(local_timestr)
+    local_datetime = strtime_to_datetime(local_timestr, tz)
     timestamp = datetime_to_timestamp(local_datetime)
     return timestamp
 
@@ -131,8 +134,9 @@ if __name__ == '__main__':
             """时间格式转换成时间戳"""
             # print(param)
             # 将时间字符串转换成时间戳
-            timestampMap = {'key': 'timestamp', 'value': strtime_to_timestamp(param)}
-            result.append(timestampMap)
+            for tz in tzList:
+                timestampMap = {'key': str(tz), 'value': strtime_to_timestamp(param, tz)}
+                result.append(timestampMap)
     except Exception as e:
         timestampMap = {'key': '格式有误', 'value': '格式有误'}
     sys.stdout.write(build_result(result))
